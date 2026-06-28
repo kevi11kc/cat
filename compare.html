@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>風格對照 · 潛水夫戴夫找貓</title>
+<style>
+  body{font-family:"PingFang TC","Microsoft JhengHei",sans-serif;
+    background:linear-gradient(180deg,#0e3b52,#06202c);color:#eafcff;
+    margin:0;padding:24px}
+  h1{text-align:center;font-size:26px;text-shadow:0 2px 0 #04202c}
+  p.lead{text-align:center;opacity:.85;margin-top:4px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));
+    gap:20px;max-width:1280px;margin:24px auto}
+  .card{background:rgba(4,32,44,.55);border:3px solid #1fb6c9;border-radius:16px;
+    overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+  .card img{display:block;width:100%;height:auto;image-rendering:pixelated}
+  .meta{padding:12px 16px}
+  .meta h2{margin:0 0 4px;font-size:18px;color:#ffd34d}
+  .meta .tag{display:inline-block;background:#1796a8;color:#eafcff;font-size:12px;
+    padding:2px 10px;border-radius:999px;margin-bottom:6px}
+  .meta small{opacity:.8;line-height:1.5;display:block}
+  .file{font-family:monospace;font-size:12px;opacity:.7;margin-top:6px}
+</style>
+</head>
+<body>
+  <h1>🎨 四種風格對照 — 挑一個來做遊戲</h1>
+  <p class="lead">都已移除泡泡。告訴我喜歡哪張（檔名），我就把它接進找貓遊戲。</p>
+  <div class="grid">
+    <div class="card">
+      <img src="dave_chibi.jpeg" alt="乾淨Q版">
+      <div class="meta"><span class="tag">A · 乾淨 Q 版</span>
+        <h2>卡通可愛・無顆粒</h2>
+        <small>最好認、最可愛，臉部清楚。像素感最低。</small>
+        <div class="file">dave_chibi.jpeg</div></div>
+    </div>
+    <div class="card">
+      <img src="dave_pix8.jpeg" alt="grok像素">
+      <div class="meta"><span class="tag">B · grok 重像素</span>
+        <h2>AI 直出像素風</h2>
+        <small>由 grok 生成的像素／sprite 質感，線條俐落，仍算好認。</small>
+        <div class="file">dave_pix8.jpeg</div></div>
+    </div>
+    <div class="card">
+      <img src="dave_chibi_px.jpeg" alt="程式像素中">
+      <div class="meta"><span class="tag">C · 程式像素・中</span>
+        <h2>濾鏡顆粒（220 格）</h2>
+        <small>把 A 圖用最近鄰縮放＋64 色量化，方塊感明顯但臉略糊。</small>
+        <div class="file">dave_chibi_px.jpeg</div></div>
+    </div>
+    <div class="card">
+      <img src="dave_chibi_px_strong.jpeg" alt="程式像素強">
+      <div class="meta"><span class="tag">D · 程式像素・強</span>
+        <h2>濾鏡顆粒（140 格）</h2>
+        <small>顆粒最重、最復古，但人物較難辨識。</small>
+        <div class="file">dave_chibi_px_strong.jpeg</div></div>
+    </div>
+  </div>
+</body>
+</html>

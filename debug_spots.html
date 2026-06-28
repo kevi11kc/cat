@@ -1,0 +1,36 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+*{margin:0;box-sizing:border-box}
+body{background:#06202c}
+#stage{position:relative;width:960px;height:640px;overflow:hidden}
+#scene{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 44%}
+.peeker{position:absolute;transform:translate(-50%,-100%)}
+.peeker img{width:100%;height:auto;display:block;image-rendering:pixelated}
+.tag{position:absolute;transform:translate(-50%,-50%);font:bold 11px sans-serif;color:#fff;
+  background:rgba(220,40,40,.9);padding:1px 4px;border-radius:6px;white-space:nowrap;z-index:9}
+.dot{position:absolute;width:6px;height:6px;background:#ff3b3b;border:1px solid #fff;border-radius:50%;
+  transform:translate(-50%,-50%);z-index:9}
+</style></head><body>
+<div id="stage">
+  <img id="scene" src="dave_pix8.jpeg">
+</div>
+<script>
+const SPOTS=[
+ {x:31,y:31,t:'head'},{x:75,y:33,t:'head'},{x:46,y:36,t:'head'},{x:27,y:37,t:'head'},{x:84,y:41,t:'head'},
+ {x:16,y:50,t:'shoulder'},{x:36,y:43,t:'shoulder'},{x:56,y:43,t:'shoulder'},{x:72,y:47,t:'shoulder'},
+ {x:20,y:57,t:'lap'},{x:44,y:55,t:'lap'},{x:84,y:57,t:'lap'},
+ {x:13,y:73,t:'feet'},{x:31,y:75,t:'feet'},{x:50,y:79,t:'feet'},{x:70,y:74,t:'feet'}
+];
+const POSE={head:'sit',shoulder:'sit',lap:'loaf',feet:'stand'};
+const COLS=['teal','org','dark','grey'];
+const SZ=3.2; // % of stage width
+const st=document.getElementById('stage');
+SPOTS.forEach((s,i)=>{
+  const d=document.createElement('div'); d.className='peeker';
+  d.style.left=s.x+'%'; d.style.top=s.y+'%'; d.style.width=(SZ)+'%';
+  d.innerHTML='<img src="cat_'+COLS[i%4]+'_'+POSE[s.t]+'.png">';
+  st.appendChild(d);
+  const dot=document.createElement('div'); dot.className='dot'; dot.style.left=s.x+'%'; dot.style.top=s.y+'%'; st.appendChild(dot);
+  const tg=document.createElement('div'); tg.className='tag'; tg.style.left=s.x+'%'; tg.style.top=(s.y+4)+'%';
+  tg.textContent=i+' '+s.t; st.appendChild(tg);
+});
+</script></body></html>

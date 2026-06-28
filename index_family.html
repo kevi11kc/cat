@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>潛水夫戴夫 · 探頭找貓</title>
+<style>
+  :root{--teal:#1fb6c9;--sun:#ffd34d;--ink:#04202c;--foam:#eafcff;--coral:#ff7a59;}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{font-family:"PingFang TC","Microsoft JhengHei",-apple-system,sans-serif;color:var(--foam);
+    background:radial-gradient(1200px 600px at 50% -10%,#1b5a72,transparent 60%),
+      linear-gradient(180deg,#0e3b52,#06202c);
+    min-height:100%;display:flex;flex-direction:column;align-items:center;padding:16px 12px 36px}
+  header{text-align:center;margin-bottom:8px}
+  h1{font-size:clamp(20px,3.6vw,32px);letter-spacing:1px;text-shadow:0 3px 0 var(--ink),0 0 18px rgba(31,182,201,.6)}
+  h1 .em{color:var(--sun)}
+  .sub{margin-top:5px;font-size:13.5px;opacity:.88}
+  .hud{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:10px 0}
+  .chip{background:rgba(4,32,44,.6);border:2px solid var(--teal);border-radius:999px;padding:7px 15px;
+    font-weight:700;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:7px;box-shadow:0 4px 0 rgba(0,0,0,.25)}
+  .chip b{color:var(--sun)}
+  button.btn{cursor:pointer;border:none;border-radius:999px;background:linear-gradient(180deg,var(--sun),#f5a623);
+    color:var(--ink);font-weight:800;padding:8px 18px;font-size:14px;box-shadow:0 5px 0 #b9760f,0 8px 14px rgba(0,0,0,.3);
+    transition:transform .08s,box-shadow .08s}
+  button.btn:active{transform:translateY(4px);box-shadow:0 1px 0 #b9760f}
+
+  #stage{position:relative;width:min(980px,96vw);border:5px solid var(--teal);border-radius:16px;overflow:hidden;
+    box-shadow:0 0 0 4px var(--ink),0 18px 50px rgba(0,0,0,.55);background:#06222e;cursor:crosshair;line-height:0;
+    aspect-ratio:3/2}
+  #scene{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 44%;
+    image-rendering:pixelated}
+  /* 地面流動波光 */
+  #caustics{position:absolute;left:-15%;right:-15%;bottom:-4%;height:46%;z-index:2;pointer-events:none;
+    mix-blend-mode:screen;transform:perspective(340px) rotateX(60deg);transform-origin:bottom center;
+    -webkit-mask-image:linear-gradient(to top,rgba(0,0,0,.9) 6%,transparent 100%);
+    mask-image:linear-gradient(to top,rgba(0,0,0,.9) 6%,transparent 100%)}
+  .lp{position:absolute;border-radius:50%;filter:blur(7px);will-change:transform;
+    background:radial-gradient(circle,rgba(205,245,255,1),rgba(150,222,255,.6) 42%,rgba(120,210,255,0) 70%)}
+
+  /* 貓出現在頭上/肩膀/腳邊：跳出來坐著約 1 秒再消失 */
+  .peeker{position:absolute;z-index:5;transform:translate(-50%,-100%);pointer-events:none}
+  .peeker .catimg{transform:scale(0) var(--flip,scaleX(1));transform-origin:50% 100%;opacity:0;will-change:transform,opacity}
+  .peeker.show{pointer-events:auto;cursor:pointer}
+  .peeker.show .catimg{animation:appear 1s ease-in-out}
+  @keyframes appear{
+    0%{transform:scale(0) var(--flip,scaleX(1));opacity:0}
+    12%{transform:scale(1.18) var(--flip,scaleX(1));opacity:1}
+    24%{transform:scale(1) var(--flip,scaleX(1));opacity:1}
+    80%{transform:scale(1) var(--flip,scaleX(1));opacity:1}
+    100%{transform:scale(.2) var(--flip,scaleX(1));opacity:0}}
+  .peeker .catpx{width:100%;height:auto;display:block;image-rendering:pixelated;image-rendering:crisp-edges}
+
+  .pop{position:absolute;z-index:7;transform:translate(-50%,-50%);pointer-events:none;font-size:30px;
+    animation:popup .7s cubic-bezier(.2,1.6,.4,1) forwards}
+  @keyframes popup{0%{transform:translate(-50%,-50%) scale(0)}60%{transform:translate(-50%,-90%) scale(1.2)}
+    100%{transform:translate(-50%,-150%) scale(1);opacity:0}}
+
+  .overlay{position:fixed;inset:0;z-index:30;display:none;background:rgba(4,20,28,.82);backdrop-filter:blur(4px);
+    align-items:center;justify-content:center;padding:20px}
+  .card{background:linear-gradient(180deg,#0e3b52,#082636);border:4px solid var(--sun);border-radius:22px;
+    max-width:420px;width:100%;padding:28px 26px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+  .card h2{font-size:28px;color:var(--sun);margin-bottom:6px;text-shadow:0 2px 0 var(--ink)}
+  .card .big{font-size:42px}
+  .card p{margin:10px 0;line-height:1.6}
+  .stat{background:rgba(0,0,0,.3);border-radius:12px;padding:12px 16px;margin:12px auto;max-width:240px}
+  .stat span{display:block;font-size:12px;opacity:.8}.stat b{font-size:30px;color:var(--teal)}
+  footer{margin-top:14px;font-size:12px;opacity:.6;text-align:center}
+  /* 密碼解鎖畫面 */
+  #gate{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(1000px 600px at 50% 20%,#1b5a72,#06202c);padding:24px}
+  #gate .box{background:linear-gradient(180deg,#0e3b52,#082636);border:4px solid var(--sun);
+    border-radius:22px;max-width:360px;width:100%;padding:30px 26px;text-align:center;
+    box-shadow:0 20px 60px rgba(0,0,0,.6)}
+  #gate h2{font-size:26px;color:var(--sun);margin-bottom:4px}
+  #gate p{font-size:14px;opacity:.85;margin:8px 0 16px}
+  #gate input{width:100%;font-size:20px;text-align:center;letter-spacing:4px;padding:12px;
+    border-radius:12px;border:2px solid var(--teal);background:#04202c;color:#eafcff;margin-bottom:12px}
+  #gateErr{color:#ff7a59;font-size:13px;min-height:18px;margin-bottom:8px}
+</style>
+</head>
+<body>
+  <header>
+    <h1>🐾 <span class="em">躲貓貓</span></h1>
+    <div class="sub">貓咪家族很調皮，會用各種姿勢出現在 <b>某人的頭上、肩膀、腿上或腳邊</b> 約 1 秒！趁牠冒出來時點到，<b>全部抓到</b>就過關。</div>
+  </header>
+
+  <div class="hud">
+    <div class="chip">🐱 找到 <b id="found">0</b>/<b id="total">4</b></div>
+    <div class="chip">⏱ 時間 <b id="time">0.0</b>s</div>
+    <button class="btn" id="musicBtn">🔊 音樂</button>
+    <button class="btn" id="resetBtn">重新開始</button>
+  </div>
+
+  <div id="stage">
+    <video id="scene" autoplay loop muted playsinline></video>
+    <div id="caustics"></div>
+    <!-- peekers 由 JS 建立 -->
+  </div>
+
+  <!-- 密碼解鎖（家人版） -->
+  <div id="gate">
+    <div class="box">
+      <h2>🔒 家人專屬</h2>
+      <p>這是家庭合照版，請輸入家人密碼解鎖</p>
+      <input id="gatePw" type="password" inputmode="numeric" placeholder="密碼" autocomplete="off">
+      <div id="gateErr"></div>
+      <button class="btn" id="gateBtn">進入 ▶</button>
+    </div>
+  </div>
+
+  <footer>趁貓探頭時點牠 · 全找到計時結算 · 點一下畫面開始輕音樂 🎵 · grok image+video × 潛水夫戴夫像素風</footer>
+
+  <div class="overlay" id="overlay">
+    <div class="card">
+      <div class="big">🎉🐾🎉</div>
+      <h2>全部抓到啦！</h2>
+      <p>貓咪家族都被你揪出來了～</p>
+      <div class="stat"><span>完成時間</span><b id="finalTime">0.0s</b></div>
+      <p id="rank" style="font-size:18px;color:var(--sun);font-weight:800"></p>
+      <button class="btn" onclick="resetGame()">再玩一次 🔁</button>
+    </div>
+  </div>
+
+<script>
+  const stage=document.getElementById('stage');
+  const foundEl=document.getElementById('found'), timeEl=document.getElementById('time');
+
+  /* ---------- 地面流動波光 ---------- */
+  const caus=document.getElementById('caustics'); const patches=[];
+  for(let i=0;i<14;i++){
+    const el=document.createElement('div'); el.className='lp';
+    const r=10+Math.random()*18; el.style.width=r+'%'; el.style.height=(r*0.7)+'%';
+    el.style.opacity=(0.34+Math.random()*0.34).toFixed(2); caus.appendChild(el);
+    patches.push({el,x:Math.random()*100,y:Math.random()*100,
+      vx:(Math.random()*2-1)*0.10-0.10,vy:(Math.random()*2-1)*0.05,ph:Math.random()*6.28});
+  }
+  function stepCaustics(now){
+    for(const p of patches){
+      p.x+=p.vx; p.y+=p.vy+Math.sin(now/2000+p.ph)*0.022;
+      if(p.x<-25)p.x=120; if(p.x>120)p.x=-25; if(p.y<-20)p.y=120; if(p.y>120)p.y=-20;
+      const s=0.8+Math.sin(now/1400+p.ph)*0.3;
+      p.el.style.transform=`translate(${p.x}%,${p.y}%) scale(${s})`;
+    }
+  }
+  requestAnimationFrame(function cal(n){ stepCaustics(n); requestAnimationFrame(cal); });
+
+  /* ---------- 貓咪家族（顏色取自 cats.jpg） ---------- */
+  const POSES=['sit','loaf','sleep','stand'];
+  // 貓咪家族：grok 生成的像素 sprite（已去背），檔名 cat_<color>_<pose>.png
+  const FAMILY=[
+    {name:'mom', color:'teal', size:5.5},   // 全家福版較小，貼在頭/肩不擋臉
+    {name:'org', color:'org',  size:4.6},
+    {name:'dark',color:'dark', size:4.6},
+    {name:'grey',color:'grey', size:4.3}
+  ];
+
+  // 貓出現點：座標=貓底部(腳/屁股)落點%；t=情境，依此選合理姿勢
+  // 全家福場景的貓出現點（頭頂/肩膀/腿上/腳邊，已校準）
+  const PEEK_SPOTS=[
+    {x:31,y:34,t:'head'},{x:75,y:34,t:'head'},{x:46,y:36,t:'head'},{x:27,y:37,t:'head'},{x:84,y:41,t:'head'},
+    {x:16,y:50,t:'shoulder'},{x:36,y:43,t:'shoulder'},{x:56,y:43,t:'shoulder'},{x:72,y:47,t:'shoulder'},
+    {x:20,y:57,t:'lap'},{x:44,y:55,t:'lap'},{x:84,y:57,t:'lap'},
+    {x:13,y:73,t:'feet'},{x:31,y:75,t:'feet'},{x:50,y:79,t:'feet'},{x:70,y:74,t:'feet'}
+  ];
+  const POSE_BY_TYPE={
+    head:['sit','loaf'], shoulder:['sit','loaf','sleep'],
+    lap:['sleep','loaf','sit'], feet:['stand','loaf','sleep']
+  };
+  document.getElementById('total').textContent=FAMILY.length;
+
+  const occupied=new Set();
+  let foundCount=0, ended=false, startT=null, rafTimer=null;
+
+  const cats=FAMILY.map((cfg,i)=>{
+    const el=document.createElement('div'); el.className='peeker'; el.dataset.i=i;
+    el.innerHTML=`<div class="catimg"><img class="catpx" alt=""></div>`;
+    stage.appendChild(el);
+    return {el, cfg, found:false, spot:null, t1:null, t2:null};
+  });
+  // 貓尺寸 = 舞台寬度的百分比（手機與桌機都看得清楚）
+  function sizeCats(){ const w=stage.clientWidth; for(const c of cats) c.el.style.width=(w*c.cfg.size/100)+'px'; }
+  sizeCats(); window.addEventListener('resize', sizeCats);
+
+  function tick(){ if(ended)return; timeEl.textContent=((performance.now()-startT)/1000).toFixed(1); rafTimer=requestAnimationFrame(tick); }
+  function startTimer(){ if(startT===null){ startT=performance.now(); tick(); } }
+
+  function schedule(cat){
+    if(cat.found||ended)return;
+    cat.t1=setTimeout(()=>doPeek(cat), 500+Math.random()*1500);
+  }
+  function doPeek(cat){
+    if(cat.found||ended)return;
+    const freeK=PEEK_SPOTS.map((_,k)=>k).filter(k=>!occupied.has(k));
+    if(freeK.length===0){ schedule(cat); return; }
+    const k=freeK[Math.floor(Math.random()*freeK.length)];
+    occupied.add(k); cat.spot=k;
+    const s=PEEK_SPOTS[k];
+    const allowed=POSE_BY_TYPE[s.t]||POSES;
+    const pose=allowed[Math.floor(Math.random()*allowed.length)];
+    const img=cat.el.querySelector('.catpx');
+    img.src=`cat_${cat.cfg.color}_${pose}.png`;
+    cat.el.style.left=s.x+'%'; cat.el.style.top=s.y+'%';
+    cat.el.querySelector('.catimg').style.setProperty('--flip','scaleX('+(Math.random()<.5?1:-1)+')');
+    cat.el.classList.remove('show'); void cat.el.offsetWidth; cat.el.classList.add('show');
+    startTimer();
+    cat.t2=setTimeout(()=>{ cat.el.classList.remove('show'); occupied.delete(k); cat.spot=null; schedule(cat); }, 1010);
+  }
+  function catchCat(cat){
+    if(cat.found)return;
+    cat.found=true;
+    clearTimeout(cat.t1); clearTimeout(cat.t2);
+    const s=PEEK_SPOTS[cat.spot]||{x:50,y:50};
+    if(cat.spot!=null) occupied.delete(cat.spot);
+    cat.el.classList.remove('show');
+    const pop=document.createElement('div'); pop.className='pop'; pop.textContent='😻';
+    pop.style.left=s.x+'%'; pop.style.top=s.y+'%'; stage.appendChild(pop); setTimeout(()=>pop.remove(),700);
+    foundCount++; foundEl.textContent=foundCount;
+    if(foundCount===cats.length) endGame();
+  }
+  function endGame(){
+    ended=true; cancelAnimationFrame(rafTimer);
+    const t=(performance.now()-startT)/1000;
+    document.getElementById('finalTime').textContent=t.toFixed(1)+'s';
+    let rank='🐟 海底新手';
+    if(t<10) rank='🏆 深海神之眼！'; else if(t<20) rank='⭐ 潛水高手'; else if(t<35) rank='🤿 合格潛水員';
+    document.getElementById('rank').textContent=rank;
+    document.getElementById('overlay').style.display='flex';
+    try{ playWin(); }catch(e){}
+  }
+
+  stage.addEventListener('click',(e)=>{
+    if(ended)return;
+    const pk=e.target.closest('.peeker'); if(!pk)return;
+    const cat=cats[+pk.dataset.i];
+    if(cat.found||!pk.classList.contains('show'))return;
+    catchCat(cat);
+  });
+
+  function resetGame(){
+    ended=false; foundCount=0; startT=null; cancelAnimationFrame(rafTimer);
+    foundEl.textContent='0'; timeEl.textContent='0.0';
+    occupied.clear();
+    document.getElementById('overlay').style.display='none';
+    cats.forEach(c=>{ c.found=false; c.spot=null; clearTimeout(c.t1); clearTimeout(c.t2);
+      c.el.classList.remove('show'); schedule(c); });
+  }
+  document.getElementById('resetBtn').addEventListener('click',resetGame);
+
+  const vid=document.getElementById('scene');
+  function keepPlaying(){ if(vid&&vid.paused) vid.play().catch(()=>{}); }
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) keepPlaying(); });
+  if(vid) vid.addEventListener('pause',keepPlaying);
+
+  // 開始：每隻貓錯開啟動（解鎖後才呼叫）
+  let started=false;
+  function startCats(){ if(started)return; started=true; cats.forEach((c,i)=> c.t1=setTimeout(()=>doPeek(c), 600+i*450)); }
+
+  /* ---------- 密碼解鎖：瀏覽器內解密家人背景 ---------- */
+  async function deriveKey(pw,salt){
+    const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),{name:'PBKDF2'},false,['deriveKey']);
+    return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:150000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['decrypt']);
+  }
+  async function decFile(url,pw){
+    const buf=new Uint8Array(await (await fetch(url)).arrayBuffer());
+    const salt=buf.slice(0,16), iv=buf.slice(16,28), ct=buf.slice(28);
+    const key=await deriveKey(pw,salt);
+    return crypto.subtle.decrypt({name:'AES-GCM',iv},key,ct);   // 失敗會 throw（密碼錯）
+  }
+  async function unlock(){
+    const pw=document.getElementById('gatePw').value.trim();
+    const err=document.getElementById('gateErr'); err.textContent='解鎖中…';
+    try{
+      const [v,i]=await Promise.all([decFile('pixel_alive.mp4.enc',pw),decFile('dave_pix8.jpeg.enc',pw)]);
+      const sc=document.getElementById('scene');
+      sc.poster=URL.createObjectURL(new Blob([i],{type:'image/jpeg'}));
+      sc.src=URL.createObjectURL(new Blob([v],{type:'video/mp4'}));
+      sc.play().catch(()=>{});
+      document.getElementById('gate').style.display='none';
+      startCats();
+      try{ ensureMusic(); }catch(e){}
+    }catch(e){ err.textContent='密碼錯誤，請再試一次'; }
+  }
+  document.getElementById('gateBtn').addEventListener('click',unlock);
+  document.getElementById('gatePw').addEventListener('keydown',e=>{ if(e.key==='Enter') unlock(); });
+
+  /* ---------- 慵懶木吉他背景音樂（Karplus-Strong 撥弦合成，無版權、無外部檔） ---------- */
+  let actx=null, musicGain=null, master=null, seqTimer=null, musicOn=true;
+  const TEMPO=72, EIGHTH=(60/TEMPO)/2;          // 慢板、留白
+  let mstep=0, mNext=0;
+  // I–V–vi–IV in G：G D Em C（吉他友善把位）
+  const PROG=[
+    {low:43, fifth:50, tones:[55,59,62]},       // G
+    {low:38, fifth:45, tones:[50,54,57]},       // D
+    {low:40, fifth:47, tones:[52,55,59]},       // Em
+    {low:36, fifth:43, tones:[48,52,55]}        // C
+  ];
+  const mf=m=>440*Math.pow(2,(m-69)/12);
+
+  // Karplus-Strong 撥弦 → 尼龍/木吉他音色
+  function ksPluck(freq,t,dur,vol){
+    const sr=actx.sampleRate, N=Math.max(2,Math.round(sr/freq)), len=Math.floor(sr*dur);
+    const buf=actx.createBuffer(1,len,sr), d=buf.getChannelData(0);
+    for(let i=0;i<N;i++) d[i]=Math.random()*2-1;
+    const damp=0.995;
+    for(let i=N;i<len;i++) d[i]=(d[i-N]+d[i-N+1])*0.5*damp;
+    const src=actx.createBufferSource(); src.buffer=buf;
+    const g=actx.createGain(); g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(vol,t+0.006);
+    g.gain.exponentialRampToValueAtTime(0.0008,t+dur);
+    const lp=actx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=3600;
+    src.connect(lp).connect(g).connect(musicGain); src.start(t); src.stop(t+dur+0.02);
+  }
+  function pad(tones,t,dur){                     // 極輕暖墊
+    tones.slice(0,3).forEach(m=>{
+      const o=actx.createOscillator(),g=actx.createGain();
+      o.type='sine'; o.frequency.value=mf(m);
+      g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.02,t+0.6);
+      g.gain.setValueAtTime(0.02,t+dur-0.6); g.gain.linearRampToValueAtTime(0.0001,t+dur);
+      o.connect(g).connect(musicGain); o.start(t); o.stop(t+dur+0.05);
+    });
+  }
+  // Travis-picking 風格的疏落指法
+  function schedStep(s,t){
+    const bar=Math.floor(s/8)%4, b=s%8, ch=PROG[bar];
+    if(b===0){ ksPluck(mf(ch.low),t,1.7,0.5); pad(ch.tones,t,EIGHTH*8); }
+    else if(b===2) ksPluck(mf(ch.tones[1]),t,1.1,0.32);
+    else if(b===3) ksPluck(mf(ch.tones[2]),t,1.0,0.30);
+    else if(b===4) ksPluck(mf(ch.fifth),t,1.4,0.40);
+    else if(b===5) ksPluck(mf(ch.tones[0]),t,1.0,0.30);
+    else if(b===6) ksPluck(mf(ch.tones[2]),t,1.0,0.28);
+  }
+  function sequencer(){
+    while(mNext < actx.currentTime+0.15){ schedStep(mstep,mNext); mNext+=EIGHTH; mstep=(mstep+1)%32; }
+  }
+  function ensureMusic(){
+    if(!actx){
+      actx=new (window.AudioContext||window.webkitAudioContext)();
+      musicGain=actx.createGain(); musicGain.gain.value=musicOn?1:0;
+      master=actx.createGain(); master.gain.value=0.62;
+      musicGain.connect(master); master.connect(actx.destination);
+      mNext=actx.currentTime+0.15; seqTimer=setInterval(sequencer,30);
+    } else if(actx.state==='suspended'){ actx.resume(); }
+  }
+  // 通關旋律：明亮上行 flourish（五聲音階、原創）
+  function playWin(){
+    ensureMusic();
+    const base=actx.currentTime+0.05;
+    const notes=[67,71,74,79,83,79,86];
+    const times=[0,0.13,0.26,0.39,0.56,0.72,0.92];
+    notes.forEach((n,i)=>{
+      const tt=base+times[i];
+      ksPluck(mf(n), tt, 1.5, 0.5);
+      const o=actx.createOscillator(),g=actx.createGain();   // 疊一層亮鈴
+      o.type='triangle'; o.frequency.value=mf(n+12);
+      g.gain.setValueAtTime(0.0001,tt); g.gain.exponentialRampToValueAtTime(0.13,tt+0.01);
+      g.gain.exponentialRampToValueAtTime(0.0008,tt+0.6);
+      o.connect(g).connect(musicGain); o.start(tt); o.stop(tt+0.65);
+    });
+  }
+  document.addEventListener('pointerdown',()=>{ if(musicOn) ensureMusic(); });
+  const musicBtn=document.getElementById('musicBtn');
+  musicBtn.addEventListener('click',(e)=>{ e.stopPropagation();
+    musicOn=!musicOn;
+    if(musicOn){ ensureMusic(); if(musicGain) musicGain.gain.setTargetAtTime(1,actx.currentTime,0.05); musicBtn.textContent='🔊 音樂'; }
+    else { if(musicGain) musicGain.gain.setTargetAtTime(0,actx.currentTime,0.05); musicBtn.textContent='🔇 靜音'; }
+  });
+</script>
+</body>
+</html>

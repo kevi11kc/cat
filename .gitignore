@@ -1,0 +1,33 @@
+# 只排除「含真人」的照片與影片，其餘皆上傳
+
+# 原始全家福 / 家人動畫影片（明文，永不上傳；線上只放加密 .enc）
+282A1009.jpeg
+family_alive.mp4
+pixel_alive.mp4
+
+# AI 風格化但仍可辨識家人臉的整張場景圖（明文不上傳）
+dave_*.jpeg
+dave_*.png
+
+# 15 張家人「被嚇」圖
+startle_*.jpeg
+contact_sheet.jpeg
+
+# 含家人場景的開發截圖 / 除錯圖
+grid.png
+grid_people.png
+debug_spots.png
+debug_spots2.png
+z_top.png
+z_top2.png
+z_mid.png
+game_shot.png
+game_shot2.png
+game_shot3.png
+game_final.png
+wallpaper_shot.png
+shot_a.png
+shot_crop.png
+
+# 綠貓裁切（邊緣帶到家人衣角/腿）
+greencat.png

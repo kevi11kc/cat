@@ -104,21 +104,29 @@
   const stage=document.getElementById('stage');
   const foundEl=document.getElementById('found'), timeEl=document.getElementById('time');
 
-  /* ---------- 地面流動波光 ---------- */
+  /* ---------- 地面流動水波光（動畫感）---------- */
   const caus=document.getElementById('caustics'); const patches=[];
-  for(let i=0;i<14;i++){
+  for(let i=0;i<16;i++){
     const el=document.createElement('div'); el.className='lp';
-    const r=10+Math.random()*18; el.style.width=r+'%'; el.style.height=(r*0.7)+'%';
-    el.style.opacity=(0.34+Math.random()*0.34).toFixed(2); caus.appendChild(el);
-    patches.push({el,x:Math.random()*100,y:Math.random()*100,
-      vx:(Math.random()*2-1)*0.10-0.10,vy:(Math.random()*2-1)*0.05,ph:Math.random()*6.28});
+    const r=9+Math.random()*16; el.style.width=r+'%'; el.style.height=(r*0.55)+'%';
+    caus.appendChild(el);
+    patches.push({el,
+      bx:Math.random()*120-10, by:Math.random()*120-10,
+      vx:-(0.04+Math.random()*0.10), vy:(Math.random()*2-1)*0.035,        // 整體向左緩流
+      ax:3+Math.random()*5, ay:2+Math.random()*4,                          // 雙向波動幅度
+      fx:0.0006+Math.random()*0.0009, fy:0.0007+Math.random()*0.001,       // 波動頻率
+      rot:Math.random()*40-20, ph:Math.random()*6.28, os:0.0009+Math.random()*0.0011});
   }
   function stepCaustics(now){
     for(const p of patches){
-      p.x+=p.vx; p.y+=p.vy+Math.sin(now/2000+p.ph)*0.022;
-      if(p.x<-25)p.x=120; if(p.x>120)p.x=-25; if(p.y<-20)p.y=120; if(p.y>120)p.y=-20;
-      const s=0.8+Math.sin(now/1400+p.ph)*0.3;
-      p.el.style.transform=`translate(${p.x}%,${p.y}%) scale(${s})`;
+      p.bx+=p.vx; p.by+=p.vy;
+      if(p.bx<-15)p.bx=115; if(p.bx>115)p.bx=-15; if(p.by<-15)p.by=115; if(p.by>115)p.by=-15;
+      const x=p.bx+Math.sin(now*p.fx+p.ph)*p.ax;
+      const y=p.by+Math.cos(now*p.fy+p.ph)*p.ay;
+      const sx=0.8+Math.sin(now*p.fx*1.7+p.ph)*0.35;                       // 拉伸脈動
+      const sy=0.8+Math.cos(now*p.fy*1.5+p.ph)*0.35;
+      p.el.style.opacity=(0.3+0.25*(1+Math.sin(now*p.os+p.ph))).toFixed(3);// 明滅閃爍 0.3~0.8
+      p.el.style.transform=`translate(${x}%,${y}%) rotate(${p.rot}deg) scale(${sx},${sy})`;
     }
   }
   requestAnimationFrame(function cal(n){ stepCaustics(n); requestAnimationFrame(cal); });
